@@ -1,2 +1,1 @@
-# GroupProject-Gateway
-GroupProject-Gateway
+# forum-gateway-service
