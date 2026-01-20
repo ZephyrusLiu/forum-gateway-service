@@ -1,0 +1,44 @@
+http:
+  port: 8080
+admin:
+  port: 9876
+  host: localhost
+
+apiEndpoints:
+  api:
+    host: localhost
+    paths:
+      - /ip
+  messageService:
+    host: localhost
+    paths: ['/health']  
+
+serviceEndpoints:
+  httpbin:
+    url: 'https://httpbin.org'
+  messageService:
+    url: 'http://host.docker.internal:5002'
+
+policies:
+  - proxy
+  - log
+  - cors
+
+pipelines:
+  default:
+    apiEndpoints:
+      - api
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: httpbin
+              changeOrigin: true
+
+  messagePipeline:
+    apiEndpoints:
+      - messageService
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: messageService
+              changeOrigin: true
