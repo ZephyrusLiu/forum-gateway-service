@@ -20,7 +20,7 @@ apiEndpoints:
       - /users/*/profile
       - /posts/*
       - /messages
-      - /users
+      - /users/*
 
 serviceEndpoints:
   userService:
