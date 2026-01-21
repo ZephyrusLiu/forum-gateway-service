@@ -4,9 +4,9 @@ db:
     emulate: true
     namespace: EG
 
-#plugins:
-  # express-gateway-plugin-example:
-  #   param1: 'param from system.config' 
+plugins:
+  claims-forwarding-plugin:
+    package: './plugins/claims-forwarding-plugin/manifest.js' 
 
 crypto:
   cipherKey: sensitiveKey

@@ -5,82 +5,123 @@ admin:
   host: localhost
 
 apiEndpoints:
-  api:
+  publicRoutes:
     host: localhost
     paths:
-      - /ip
-  messageService:
-    host: localhost
-    paths: ['/health']  
-  userAuthPublic:
+      - /users/login
+      - /users/register
+      - /users/health
+      - /users/verify
+      - /contactus
+  protectedRoutes:
     host: localhost
     paths:
-      - '/users/health'
-      - '/users/login'
-      - '/users/register'
-      - '/users/verify'
-  
-  # --- PROTECTED AREA ---
-  # These routes require a valid JWT to access
-  userProtected:
-    host: localhost
-    paths: 
-      - '/users/*'
+      - /home
+      - /users/*/profile
+      - /posts/*
+      - /messages
+      - /users
 
 serviceEndpoints:
-  httpbin:
-    url: 'https://httpbin.org'
+  userService:
+    url: 'http://host.docker.internal:5001'
+  historyService:
+    url: 'http://host.docker.internal:5003'
+  postReplyService:
+    url: 'http://host.docker.internal:5004'
   messageService:
     url: 'http://host.docker.internal:5002'
-  user_service:
-    url: 'http://localhost:5001'
+  fileService:
+    url: 'http://host.docker.internal:5005'
 
 policies:
   - proxy
-  - log
   - cors
   - jwt
-  - expression
+  - claims-forwarding
 
 pipelines:
-  # 1. Auth Pipeline (Login/Register)
-  userAuthPublicPipeline:
+  publicPipeline:
     apiEndpoints:
-      - userAuthPublic
+      - publicRoutes
     policies:
-      - proxy:
-          action:
-            serviceEndpoint: user_service
-            changeOrigin: true
-
-  userProtectedPipeline:
-    apiEndpoints:
-      - userProtected
-    policies:
-      - jwt:
-          action:
-            secretOrPublicKey: ${JWT_SECRET}
-            #issuer: ${JWT_ISSUER}
-            issuer: 'forum_user_service'
-            checkCredentialExistence: false
-      - proxy:
-          action:
-            serviceEndpoint: user_service
-            changeOrigin: true
-  default:
-    apiEndpoints:
-      - api
-    policies:
+      - cors:
+          - action:
+              origin: '*'
+              credentials: true
       - proxy:
           - action:
-              serviceEndpoint: httpbin
+              serviceEndpoint: userService
               changeOrigin: true
-
-  messagePipeline:
-    apiEndpoints:
-      - messageService
-    policies:
-      - proxy:
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/users/(login|register|health|verify)$'
           - action:
               serviceEndpoint: messageService
               changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/contactus$'
+
+  protectedPipeline:
+    apiEndpoints:
+      - protectedRoutes
+    policies:
+      - cors:
+          - action:
+              origin: '*'
+              credentials: true
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+              algorithms:
+                - HS256
+              issuer: 'forum_user_service'
+      - claims-forwarding:
+          - action:
+      - proxy:
+          - action:
+              serviceEndpoint: userService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/home$|^/users/.*/profile$|^/users$'
+          - action:
+              serviceEndpoint: historyService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/home$'
+          - action:
+              serviceEndpoint: postReplyService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/posts/.*$'
+          - action:
+              serviceEndpoint: historyService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/posts/.*$'
+          - action:
+              serviceEndpoint: messageService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/messages$'
