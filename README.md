@@ -38,6 +38,8 @@ The gateway is configured with two pipelines:
 - **Public Pipeline**: Routes that bypass JWT verification
   - `/users/login`
   - `/users/register`
+  - `/users/health`
+  - `/users/verify`
   - `/contactus`
 
 - **Protected Pipeline**: Routes that require JWT verification
@@ -51,3 +53,18 @@ Protected routes require an `Authorization: Bearer <token>` header. The gateway 
 - `X-User-Id`
 - `X-User-Type`
 - `X-Verified-Status`
+
+## Route Mapping
+
+| Route | Service(s) | Pipeline | Auth Required |
+|-------|-----------|----------|---------------|
+| `/users/login` | User | Public | No |
+| `/users/register` | User | Public | No |
+| `/users/health` | User | Public | No |
+| `/users/verify` | User | Public | No |
+| `/contactus` | Message | Public | No |
+| `/home` | User, History | Protected | Yes |
+| `/users/{id}/profile` | User | Protected | Yes |
+| `/posts/{id}` | Post-Reply, History | Protected | Yes |
+| `/messages` | Message | Protected | Yes (Admin) |
+| `/users` | User | Protected | Yes (Admin) |
