@@ -1,11 +1,11 @@
-require('dotenv').config();
-const expressGateway = require('express-gateway');
 const path = require('path');
-const logger = require('./utils/logger');
+require('dotenv').config({path : path.resolve(__dirname,'../.env')});
 
 if (!process.env.JWT_SECRET) {
   throw new Error('Missing JWT_SECRET environment variable');
 }
+const logger = require('./utils/logger');
+const expressGateway = require('express-gateway');
 
 const port = process.env.PORT || 8080;
 const adminPort = process.env.ADMIN_PORT || 9876;
