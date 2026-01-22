@@ -25,19 +25,19 @@ module.exports = {
       const payload = token.payload || token;
       const forwardedClaims = {};
 
-      if (payload.userId) {
-        req.headers['x-user-id'] = String(payload.userId);
-        forwardedClaims.userId = payload.userId;
+      if (payload.id) {
+        req.headers['x-user-id'] = String(payload.id);
+        forwardedClaims.userId = payload.id;
       }
 
-      if (payload.userType) {
-        req.headers['x-user-type'] = String(payload.userType);
-        forwardedClaims.userType = payload.userType;
+      if (payload.type) {
+        req.headers['x-user-type'] = String(payload.type);
+        forwardedClaims.userType = payload.type;
       }
 
-      if (payload.verifiedStatus !== undefined) {
-        req.headers['x-verified-status'] = String(payload.verifiedStatus);
-        forwardedClaims.verifiedStatus = payload.verifiedStatus;
+      if (payload.status !== undefined) {
+        req.headers['x-verified-status'] = String(payload.status);
+        forwardedClaims.verifiedStatus = payload.status;
       }
 
       const duration = Date.now() - startTime;
