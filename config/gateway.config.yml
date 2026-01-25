@@ -21,6 +21,7 @@ apiEndpoints:
       - /posts/*
       - /messages
       - /users/*
+      - /history
 
 serviceEndpoints:
   userService:
@@ -125,3 +126,11 @@ pipelines:
               condition:
                 name: path
                 matchRegex: '^/messages$'
+          - action:
+              serviceEndpoint: historyService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/history
