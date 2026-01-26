@@ -1,36 +1,43 @@
 http:
   port: 8080
-
 admin:
   port: 9876
   host: localhost
 
 apiEndpoints:
-  publicRoutes:
+  userServicePublic:
     host: localhost
     paths:
       - /users/login
       - /users/register
       - /users/health
       - /users/verify
-      - /contactus
-
-  protectedRoutes:
+  userServiceProtected:
     host: localhost
     paths:
-      - /home
+      - /users/*
       - /users/*/profile
-
-      # Post/Reply service (mounted under /api)
+  messageServicePublic:
+    host: localhost
+    paths:
+      - /message-service/health
+      - /contactus
+  messageServiceProtected:
+    host: localhost
+    paths:
+      - /messages
+  postReplyServiceProtected:
+    host: localhost
+    paths:
       - /api/posts
       - /api/posts/*
       - /api/replies
       - /api/replies/*
       - /api/me/posts/*
       - /api/admin/posts/*
-
-      - /messages
-      - /users/*
+  historyServiceProtected:
+    host: localhost
+    paths:
       - /history
 
 serviceEndpoints:
@@ -52,43 +59,29 @@ policies:
   - claims-forwarding
 
 pipelines:
-  publicPipeline:
+  userServicePublicPipeline:
     apiEndpoints:
-      - publicRoutes
+      - userServicePublic
     policies:
       - cors:
           - action:
               origin: '*'
               credentials: true
-
       - proxy:
           - action:
               serviceEndpoint: userService
               changeOrigin: true
               prependPath: false
               stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/users/(login|register|health|verify)$'
 
-          - action:
-              serviceEndpoint: messageService
-              changeOrigin: true
-              prependPath: false
-              stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/contactus$'
-
-  protectedPipeline:
+  userServiceProtectedPipeline:
     apiEndpoints:
-      - protectedRoutes
+      - userServiceProtected
     policies:
       - cors:
           - action:
               origin: '*'
               credentials: true
-
       - jwt:
           - action:
               secretOrPublicKey: ${JWT_SECRET}
@@ -96,57 +89,98 @@ pipelines:
               algorithms:
                 - HS256
               issuer: 'forum_user_service'
-
-      # ✅ EXACTLY like original (no object)
       - claims-forwarding:
           - action:
-
       - proxy:
-
-          - action:
-              serviceEndpoint: postReplyService
-              changeOrigin: true
-              prependPath: false
-              stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/api/(posts|replies|me/posts|admin/posts)(/.*)?$'
-          # Users + profile + home
           - action:
               serviceEndpoint: userService
               changeOrigin: true
               prependPath: false
               stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/home$|^/users/.*/profile$|^/users$|^/users/.*$'
 
-          # Home history
+  messageServicePublicPipeline:
+    apiEndpoints:
+      - messageServicePublic
+    policies:
+      - cors:
           - action:
-              serviceEndpoint: historyService
-              changeOrigin: true
-              prependPath: false
-              stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/home$'
-
-          # Messages
+              origin: '*'
+              credentials: true
+      - proxy:
           - action:
               serviceEndpoint: messageService
               changeOrigin: true
               prependPath: false
               stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/messages$'
 
-          # History
+  messageServiceProtectedPipeline:
+    apiEndpoints:
+      - messageServiceProtected
+    policies:
+      - cors:
+          - action:
+              origin: '*'
+              credentials: true
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+              algorithms:
+                - HS256
+              issuer: 'forum_user_service'
+      - claims-forwarding:
+          - action:
+      - proxy:
+          - action:
+              serviceEndpoint: messageService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+
+  postReplyServiceProtectedPipeline:
+    apiEndpoints:
+      - postReplyServiceProtected
+    policies:
+      - cors:
+          - action:
+              origin: '*'
+              credentials: true
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+              algorithms:
+                - HS256
+              issuer: 'forum_user_service'
+      - claims-forwarding:
+          - action:
+      - proxy:
+          - action:
+              serviceEndpoint: postReplyService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+
+  historyServiceProtectedPipeline:
+    apiEndpoints:
+      - historyServiceProtected
+    policies:
+      - cors:
+          - action:
+              origin: '*'
+              credentials: true
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+              algorithms:
+                - HS256
+              issuer: 'forum_user_service'
+      - claims-forwarding:
+          - action:
+      - proxy:
           - action:
               serviceEndpoint: historyService
               changeOrigin: true
               prependPath: false
               stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/history(/.*)?$'

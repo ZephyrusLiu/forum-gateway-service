@@ -23,7 +23,7 @@ docker run -p 8080:8080 -e JWT_SECRET=your-secret-key-here -e LOG_LEVEL=info for
 Or use an env file:
 
 ```bash
-docker run -p 8080:8080 --env-file ...env forum-gateway:latest
+docker run -p 8080:8080 --env-file ../.env forum-gateway:latest
 ```
 
 **Environment Variables:**
