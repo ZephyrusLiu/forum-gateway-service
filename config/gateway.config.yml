@@ -3,7 +3,7 @@ http:
 
 admin:
   port: 9876
-  host: 0.0.0.0   # CHANGED (was localhost)
+  host: localhost
 
 apiEndpoints:
   publicRoutes:
@@ -15,15 +15,13 @@ apiEndpoints:
       - /users/verify
       - /contactus
 
-  # CHANGED: split post routes out so they can skip claims-forwarding
-  postRoutes:
+  protectedRoutes:
     host: localhost
     paths:
-      # Keep if any client still calls /posts/*
-      - /posts
-      - /posts/*
+      - /home
+      - /users/*/profile
 
-      # ✅ Post service real mounted routes (under /api)
+      # Post/Reply service (mounted under /api)
       - /api/posts
       - /api/posts/*
       - /api/replies
@@ -31,16 +29,9 @@ apiEndpoints:
       - /api/me/posts/*
       - /api/admin/posts/*
 
-  # CHANGED: protectedRoutes no longer includes post routes; history uses /history/*
-  protectedRoutes:
-    host: localhost
-    paths:
-      - /home
-      - /users/*/profile
-      - /users/*
       - /messages
+      - /users/*
       - /history
-      - /history/*
 
 serviceEndpoints:
   userService:
@@ -89,43 +80,6 @@ pipelines:
                 name: path
                 matchRegex: '^/contactus$'
 
-  # ADDED: post pipeline without claims-forwarding
-  postPipeline:
-    apiEndpoints:
-      - postRoutes
-    policies:
-      - cors:
-          - action:
-              origin: '*'
-              credentials: true
-
-      - jwt:
-          - action:
-              secretOrPublicKey: ${JWT_SECRET}
-              checkCredentialExistence: false
-              algorithms:
-                - HS256
-              issuer: 'forum_user_service'
-
-      - proxy:
-          - action:
-              serviceEndpoint: postReplyService
-              changeOrigin: true
-              prependPath: false
-              stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/api/(posts|replies|me/posts|admin/posts)(/.*)?$'
-
-          - action:
-              serviceEndpoint: postReplyService
-              changeOrigin: true
-              prependPath: false
-              stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/posts(/.*)?$'
-
   protectedPipeline:
     apiEndpoints:
       - protectedRoutes
@@ -143,10 +97,20 @@ pipelines:
                 - HS256
               issuer: 'forum_user_service'
 
+      # ✅ EXACTLY like original (no object)
       - claims-forwarding:
-          - action: {}
+          - action:
 
       - proxy:
+
+          - action:
+              serviceEndpoint: postReplyService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/api/(posts|replies|me/posts|admin/posts)(/.*)?$'
           # Users + profile + home
           - action:
               serviceEndpoint: userService
@@ -167,16 +131,6 @@ pipelines:
                 name: path
                 matchRegex: '^/home$'
 
-          # History (moved off /posts/*)
-          - action:
-              serviceEndpoint: historyService
-              changeOrigin: true
-              prependPath: false
-              stripPath: false
-              condition:
-                name: path
-                matchRegex: '^/history(/.*)?$'
-
           # Messages
           - action:
               serviceEndpoint: messageService
@@ -186,3 +140,13 @@ pipelines:
               condition:
                 name: path
                 matchRegex: '^/messages$'
+
+          # History
+          - action:
+              serviceEndpoint: historyService
+              changeOrigin: true
+              prependPath: false
+              stripPath: false
+              condition:
+                name: path
+                matchRegex: '^/history(/.*)?$'
