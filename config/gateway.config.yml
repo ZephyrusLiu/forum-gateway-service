@@ -26,6 +26,7 @@ apiEndpoints:
     host: localhost
     paths:
       - /messages
+      - /messages/*
   postReplyServiceProtected:
     host: localhost
     paths:
@@ -57,12 +58,16 @@ policies:
   - cors
   - jwt
   - claims-forwarding
+  - request-logger
 
 pipelines:
   userServicePublicPipeline:
     apiEndpoints:
       - userServicePublic
     policies:
+      - request-logger:
+          - action:
+              service: user
       - cors:
           - action:
               origin: '*'
@@ -78,6 +83,9 @@ pipelines:
     apiEndpoints:
       - userServiceProtected
     policies:
+      - request-logger:
+          - action:
+              service: user
       - cors:
           - action:
               origin: '*'
@@ -102,6 +110,9 @@ pipelines:
     apiEndpoints:
       - messageServicePublic
     policies:
+      - request-logger:
+          - action:
+              service: message
       - cors:
           - action:
               origin: '*'
@@ -117,6 +128,9 @@ pipelines:
     apiEndpoints:
       - messageServiceProtected
     policies:
+      - request-logger:
+          - action:
+              service: message
       - cors:
           - action:
               origin: '*'
@@ -141,6 +155,9 @@ pipelines:
     apiEndpoints:
       - postReplyServiceProtected
     policies:
+      - request-logger:
+          - action:
+              service: post-reply
       - cors:
           - action:
               origin: '*'
@@ -165,6 +182,9 @@ pipelines:
     apiEndpoints:
       - historyServiceProtected
     policies:
+      - request-logger:
+          - action:
+              service: history
       - cors:
           - action:
               origin: '*'
