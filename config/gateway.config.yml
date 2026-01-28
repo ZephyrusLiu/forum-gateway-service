@@ -26,6 +26,7 @@ apiEndpoints:
     host: localhost
     paths:
       - /messages
+      - /messages/*
   postReplyServiceProtected:
     host: localhost
     paths:
