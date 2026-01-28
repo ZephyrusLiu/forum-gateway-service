@@ -6,7 +6,9 @@ db:
 
 plugins:
   claims-forwarding-plugin:
-    package: './plugins/claims-forwarding-plugin/manifest.js' 
+    package: './plugins/claims-forwarding-plugin/manifest.js'
+  request-logger-plugin:
+    package: './plugins/request-logger-plugin/manifest.js'  
 
 crypto:
   cipherKey: sensitiveKey
